@@ -1,0 +1,94 @@
+---
+- name: graphite_grafana
+  hosts: graphite_grafana
+  sudo: yes
+  tasks:
+    - name: install graphite-web
+      apt: name=graphite-web state=present
+      
+    - name: work around djangos deprecated raw_post_data which is still used in graphite
+      replace: dest=/usr/lib/python2.7/dist-packages/graphite/events/views.py regexp='\.raw_post_data' replace='.body' backup=yes
+      
+    - name: install graphite-carbon
+      apt: name=graphite-carbon state=present
+      
+    - name: install adduser
+      apt: name=adduser state=present
+      
+    - name: install libfontconfig
+      apt: name=libfontconfig state=present
+      
+    - name: copy carbon config
+      template: src=templates/etc/default/graphite-carbon.j2 dest=/etc/default/graphite-carbon
+      notify:
+      - restart carbon-cache
+      
+    - name: sync carbon database
+      command: graphite-manage syncdb --noinput creates=/var/lib/graphite/graphite.db
+      
+    - name: adjust carbon database permissions
+      file: path=/var/lib/graphite/graphite.db owner=_graphite group=_graphite
+      notify:
+      - restart apache2
+      
+    - name: install apache2
+      apt: name=apache2 state=present
+      
+    - name: install libapache2-mod-wsgi
+      apt: name=libapache2-mod-wsgi state=present
+      
+    - name: disable apache default host
+      command: a2dissite 000-default removes=/etc/apache2/sites-enabled/000-default.conf
+    
+    - name: copy new apache default host
+      template: src=templates/etc/apache2/sites-available/apache2-graphite.conf.j2 dest=/etc/apache2/sites-available/apache2-graphite.conf
+      
+    - name: enable new apache default host
+      command: a2ensite apache2-graphite creates=/etc/apache2/sites-enabled/apache2-graphite.conf
+      notify:
+      - restart apache2
+
+    - name: activate apache proxy_http module
+      command: a2enmod proxy_http  
+      notify:
+      - restart apache2
+      
+    - name: reload apache2 to activate reverse proxy
+      service: name=apache2 state=reloaded
+
+    - name: download grafana package
+      command: wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.0.2_amd64.deb -P /tmp creates=/tmp/grafana_2.0.2_amd64.deb
+      
+    - name: install grafana package
+      command: dpkg -i /tmp/grafana_2.0.2_amd64.deb
+
+    - name: start grafana-server
+      service: name=grafana-server state=started
+
+    - name: autostart grafana-server
+      service: name=carbon-cache enabled=yes
+      
+    - name: copy grafana config file
+      template: src=templates/etc/grafana/grafana.ini.j2 dest=/etc/grafana/grafana.ini
+      
+    - name: reload grafana-server for new config
+      service: name=grafana-server state=restarted
+
+    - name: adding graphite datasource to grafana
+      script: scripts/register_graphite_datasource.sh
+
+    - name: copy sample dashboard json
+      template: src=templates/sample_dashboard.json.j2 dest=/tmp/sample_dashboard.json
+
+    - name: adding sample dashboard to grafana
+      script: scripts/add_sample_dashboard.sh -j /tmp/sample_dashboard.json
+
+  handlers:
+    - name: restart carbon-cache
+      service: name=carbon-cache state=restarted
+      
+    - name: restart apache2
+      service: name=apache2 state=restarted
+      
+    - name: restart grafana-server
+      service: name=grafana-server state=restarted
