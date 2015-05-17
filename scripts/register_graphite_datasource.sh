@@ -25,7 +25,7 @@ else
 		\"type\": \"graphite\", \
 		\"access\": \"direct\", \
 		\"isDefault\": true, \
-		\"url\": \"http://localhost\" }")
+		\"url\": \"http://localhost:9100\" }")
 		
 	if [[ $MESSAGE =~ "Datasource added" ]]; then
 		echo "datasource added"
