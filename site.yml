@@ -1,0 +1,3 @@
+---
+- include: graphite-grafana.yml
+- include: graphite-grafana-data.yml

@@ -1,6 +1,6 @@
 ---
-- name: graphite_grafana
-  hosts: graphite_grafana
+- name: graphite-grafana
+  hosts: graphite-grafana
   sudo: yes
   roles:
     - role: nginx
@@ -98,28 +98,12 @@
       file: path=/var/lib/graphite/graphite.db owner=_graphite group=_graphite
       notify: restart uwsgi
 
-    - name: "add www-data to grpahite group"
-      user: name=www-data groups=_graphite append=yes
+    - name: adjust graphite search index permissions
+      file: path=/var/lib/graphite/search_index group=www-data state=touch
+      notify: restart uwsgi
 
-#      
-#    - name: install adduser
-#      apt: name=adduser state=present
-#      
-#    - name: install libfontconfig
-#      apt: name=libfontconfig state=present
-#      
-#     
-#      
-#      
-#    - name: adding graphite datasource to grafana
-#      script: scripts/register_graphite_datasource.sh
-#
-#    - name: copy sample dashboard json
-#      template: src=templates/sample_dashboard.json.j2 dest=/tmp/sample_dashboard.json
-#
-#    - name: adding sample dashboard to grafana
-#      script: scripts/add_sample_dashboard.sh -j /tmp/sample_dashboard.json
-#
+    - name: "add www-data to _graphite group"
+      user: name=www-data groups=_graphite append=yes
 
   handlers:
 
@@ -131,4 +115,3 @@
 
      - name: restart uwsgi
        service: name=uwsgi state=restarted
- 

@@ -1,0 +1,18 @@
+---
+- name: graphite-grafana-data
+  hosts: graphite-grafana
+  sudo: yes
+  vars:
+    base_url: "http://localhost"
+  tasks:
+    - name: "copy sample datasource json"
+      template: src=templates/datasource.json.j2 dest=/tmp/datasource.json
+
+    - name: "adding graphite datasource to grafana"
+      script: scripts/register_graphite_datasource.sh -j /tmp/datasource.json
+
+    - name: "copy sample dashboard json"
+      template: src=templates/sample_dashboard.json.j2 dest=/tmp/sample_dashboard.json
+
+    - name: "adding sample dashboard to grafana"
+      script: scripts/add_sample_dashboard.sh -j /tmp/sample_dashboard.json
