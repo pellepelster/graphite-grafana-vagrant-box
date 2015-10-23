@@ -19,6 +19,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	config.vm.network "forwarded_port", guest: 80, host: http_port
 	config.vm.network "forwarded_port", guest: 2003, host: 2003
 
+	config.vm.provider :virtualbox do |vb|
+		vb.customize ["modifyvm", :id, "--memory", "2048"]
+		vb.customize ["modifyvm", :id, "--cpus", "2"]
+	end
+
+
 	config.vm.provision :ansible do |ansible|
 		ansible.playbook = "site.yml"
 		ansible.groups = {
@@ -29,11 +35,12 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 	}
 	end
 
-	config.vm.provider :virtualbox do |vb|
-		vb.customize ["modifyvm", :id, "--memory", "2048"]
-		vb.customize ["modifyvm", :id, "--cpus", "2"]
+	if Vagrant.has_plugin?("vagrant-serverspec") and Vagrant.has_plugin?("infrataster") 
+		config.vm.provision :serverspec do |spec|
+	    spec.pattern = 'spec/*_spec.rb'
+	  end
 	end
 
 	config.vm.provision "shell", inline: $info_message
-	
+
 end
