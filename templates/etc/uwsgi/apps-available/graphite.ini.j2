@@ -1,0 +1,9 @@
+[uwsgi]
+[uwsgi]
+processes = 2
+socket = 127.0.0.1:3031
+gid = _graphite
+uid = _graphite
+chdir = /usr/share/graphite-web
+wsgi-file = graphite.wsgi
+plugin = python

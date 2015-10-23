@@ -5,11 +5,10 @@ VAGRANTFILE_API_VERSION = "2"
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
 
-	config.vm.box = "ubuntu/vivid64"
+	config.vm.box = "ubuntu/trusty64"
 	config.vm.synced_folder ".", "/vagrant", disabled: true
-	config.vm.network "forwarded_port", guest: 80, host: 9100
+	config.vm.network "forwarded_port", guest: 80, host: 1080
 	config.vm.network "forwarded_port", guest: 2003, host: 2003
-	config.vm.network "forwarded_port", guest: 3000, host: 3000
 	
 	config.vm.provision :ansible do |ansible|
 		ansible.playbook = "graphite-grafana.yml"
