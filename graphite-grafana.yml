@@ -2,6 +2,11 @@
 - name: graphite-grafana
   hosts: graphite-grafana
   sudo: yes
+
+  pre_tasks:
+    - name: apt-get update
+      apt: update_cache=yes
+
   roles:
     - role: nginx
       nginx_events_params:
